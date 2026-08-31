@@ -1,5 +1,5 @@
-export const STORE_LAT = 3.130718500000013;
-export const STORE_LNG = 101.7762545;
+export const STORE_LAT = 3.1571917219363916;
+export const STORE_LNG = 101.75730715430616;
 export const MAX_ALLOWED_RADIUS_METERS = 100;
 
 export const ALLOWED_EMAILS = [
