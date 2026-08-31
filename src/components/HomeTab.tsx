@@ -5,6 +5,7 @@ import {
   Square,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   MapPin,
   Clock,
   Compass,
@@ -319,9 +320,25 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
   };
 
   // Determine State
-  const isClockedIn = activeLog && activeLog.clockIn && !activeLog.clockOut;
-  const isShiftCompleted = activeLog && activeLog.clockIn && activeLog.clockOut;
-  const isAbsent = activeLog && activeLog.punctualityStatus === 'ABSENT';
+  const isAbsent = Boolean(
+    activeLog &&
+      (activeLog.punctualityStatus === 'ABSENT' ||
+        activeLog.statusColor === 'red' ||
+        (activeLog.remarks && activeLog.remarks.toLowerCase().includes('absent')))
+  );
+
+  const isClockedIn = Boolean(
+    activeLog && !isAbsent && activeLog.clockIn && !activeLog.clockOut && activeLog.clockIn !== '--:--'
+  );
+
+  const isShiftCompleted = Boolean(
+    activeLog &&
+      !isAbsent &&
+      activeLog.clockIn &&
+      activeLog.clockOut &&
+      activeLog.clockIn !== '--:--' &&
+      activeLog.clockOut !== '--:--'
+  );
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-6">
@@ -346,33 +363,33 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
           {/* Status Badge */}
           <span
             className={`px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wide border flex items-center space-x-1.5 ${
-              isClockedIn
+              isAbsent
+                ? 'bg-red-400/10 text-red-400 border-red-500/20'
+                : isClockedIn
                 ? 'bg-green-400/10 text-green-400 border-green-500/20'
                 : isShiftCompleted
                 ? 'bg-slate-800 text-slate-400 border-slate-700'
-                : isAbsent
-                ? 'bg-red-400/10 text-red-400 border-red-500/20'
                 : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                isClockedIn
+                isAbsent
+                  ? 'bg-red-400'
+                  : isClockedIn
                   ? 'bg-green-400 animate-pulse'
                   : isShiftCompleted
                   ? 'bg-slate-500'
-                  : isAbsent
-                  ? 'bg-red-400'
                   : 'bg-blue-400'
               }`}
             />
             <span>
-              {isClockedIn
+              {isAbsent
+                ? 'ABSENT'
+                : isClockedIn
                 ? 'ON DUTY • ACTIVE'
                 : isShiftCompleted
                 ? 'SHIFT COMPLETED'
-                : isAbsent
-                ? 'ABSENT'
                 : 'OFF DUTY'}
             </span>
           </span>
@@ -392,38 +409,42 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
         {/* Live Duration HUD */}
         <div
           className={`p-6 rounded-xl border text-center mb-6 transition-colors duration-150 ${
-            isClockedIn
+            isAbsent
+              ? 'bg-slate-900/80 border-red-500/30'
+              : isClockedIn
               ? 'bg-slate-900/80 border-green-500/30'
               : isShiftCompleted
               ? 'bg-slate-900/60 border-slate-700'
-              : isAbsent
-              ? 'bg-slate-900/80 border-red-500/30'
               : 'bg-slate-900/60 border-slate-700'
           }`}
         >
           <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">
-            {isClockedIn ? 'Active Shift Elapsed Time' : 'Recorded Shift Duration'}
+            {isAbsent
+              ? 'Attendance Status'
+              : isClockedIn
+              ? 'Active Shift Elapsed Time'
+              : 'Recorded Shift Duration'}
           </span>
           <div
             className={`font-mono text-4xl sm:text-5xl font-bold my-2 tracking-tight ${
-              isClockedIn
+              isAbsent
+                ? 'text-red-400'
+                : isClockedIn
                 ? 'text-green-400'
                 : isShiftCompleted
                 ? 'text-slate-200'
-                : isAbsent
-                ? 'text-red-400'
                 : 'text-slate-400'
             }`}
           >
-            {elapsedTimer}
+            {isAbsent ? 'ABSENT' : elapsedTimer}
           </div>
           <p className="text-xs text-slate-400">
-            {isClockedIn
+            {isAbsent
+              ? activeLog?.remarks || 'Marked absent for today'
+              : isClockedIn
               ? `Clocked in at ${activeLog?.clockIn} • Shift in progress`
               : isShiftCompleted
               ? `Shift finished at ${activeLog?.clockOut}`
-              : isAbsent
-              ? 'Marked absent for today'
               : 'Ready to punch clock-in'}
           </p>
         </div>
@@ -449,8 +470,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
               <div className="text-[10px] text-slate-400">
                 {geoStatus.distance !== null
                   ? geoStatus.inRadius
-                    ? 'Within 100m geofence radius'
-                    : 'Outside 100m geofence limit'
+                  ? 'Within 100m geofence radius'
+                  : 'Outside 100m geofence limit'
                   : 'Tap verify to refresh GPS'}
               </div>
             </div>
@@ -472,9 +493,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
           type="button"
           id="clock-action-btn"
           onClick={handleToggleClock}
-          disabled={loadingAction || Boolean(isShiftCompleted)}
+          disabled={loadingAction || Boolean(isShiftCompleted) || Boolean(isAbsent)}
           className={`w-full py-3 px-5 rounded-xl font-medium text-sm transition-all shadow-lg cursor-pointer flex items-center justify-center space-x-2 ${
-            isClockedIn
+            isAbsent
+              ? 'bg-red-500/10 border border-red-500/30 text-red-400 cursor-not-allowed'
+              : isClockedIn
               ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-900/20'
               : isShiftCompleted
               ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
@@ -486,6 +509,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onOpenLeaveModal }) => {
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               <span>Verifying & Recording...</span>
             </div>
+          ) : isAbsent ? (
+            <>
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span>Marked Absent For Today</span>
+            </>
           ) : isClockedIn ? (
             <>
               <Square className="w-4 h-4 fill-white" />
