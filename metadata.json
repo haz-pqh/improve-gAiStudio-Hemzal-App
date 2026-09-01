@@ -1,6 +1,0 @@
-{
-  "name": "Hemzal Staff Portal",
-  "description": "Staff attendance, GPS clocking terminal, daily sales report, leave management, and payslip viewer for Hemzal Crispy Chicken.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
